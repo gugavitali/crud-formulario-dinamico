@@ -1,0 +1,12 @@
+@if (formContract) {
+  <h2>{{ formContract.title }}</h2>
+
+  <form>
+    @for (comp of formContract.components; track comp.id) {
+      <div [class]="'col-md-' + comp.details.gridSpan">
+        <label [for]="comp.id">{{ comp.label }}</label>
+        <!-- O campo de input real e as validações do Reactive Forms entrarão aqui na próxima task -->
+      </div>
+    }
+  </form>
+}
