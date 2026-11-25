@@ -1,45 +1,62 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DynamicForm } from './dynamic-form';
-import { ReactiveFormsModule } from '@angular/forms';
+import { createMockFormContract } from '../../mocks/form-contract.mock';
+import { FormContract } from '../../models/form-contract.model';
 
 describe('DynamicForm', () => {
   let component: DynamicForm;
   let fixture: ComponentFixture<DynamicForm>;
 
-  // 1. O contrato Mockado
-  const mockContract = {
-    id: 10,
-    title: 'Formulário do Setor de TI',
-    components: [
-      {
-        id: 2,
-        type: 'TEXT',
-        label: 'Técnico Responsável',
-        details: { gridSpan: 4, required: true }
-      }
-    ]
-  };
+  const mockContract: FormContract = createMockFormContract();
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [DynamicForm, ReactiveFormsModule], // Assumindo Angular Standalone Components 
+      imports: [DynamicForm],
     }).compileComponents();
 
     fixture = TestBed.createComponent(DynamicForm);
     component = fixture.componentInstance;
-
-    //2. Injetamos o contrato e forçamos a renderização da tela
-    component.formContract = mockContract as any;
+    fixture.componentRef.setInput('formContract', mockContract);
     fixture.detectChanges();
   });
 
-  it('deve renderizar o título do formulário', () => {
-    const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h2')?.textContent).toContain('Formulário do Setor de TI');
+  it('should create', () => {
+    expect(component).toBeTruthy();
   });
 
-  it('deve renderizar os labels dos componentes dinâmicos', () => {
+  it('should render title, text input, and combobox with options from contract', () => {
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('label')?.textContent).toContain('Técnico Responsável');
-  })
+
+    expect(compiled.querySelector('[data-testid="form-title"]')?.textContent).toContain(
+      'Ordem de Serviço',
+    );
+
+    const textInput = compiled.querySelector('#field-tech');
+    expect(textInput?.tagName).toBe('INPUT');
+
+    const select = compiled.querySelector('#field-priority') as HTMLSelectElement;
+    expect(select?.tagName).toBe('SELECT');
+    expect(select.options.length).toBe(4); // 1 placeholder + 3 options
+  });
+
+  it('should NOT emit formSubmit when required fields are empty', () => {
+    const emitSpy = vi.spyOn(component.formSubmit, 'emit');
+
+    component.onSubmit();
+
+    expect(emitSpy).not.toHaveBeenCalled();
+  });
+
+  it('should emit form values when all required fields are valid', () => {
+    const emitSpy = vi.spyOn(component.formSubmit, 'emit');
+
+    component.formGroup.get('field-tech')?.setValue('Gustavo');
+    component.formGroup.get('field-priority')?.setValue('Alta');
+    component.onSubmit();
+
+    expect(emitSpy).toHaveBeenCalledWith({
+      'field-tech': 'Gustavo',
+      'field-priority': 'Alta',
+    });
+  });
 });
