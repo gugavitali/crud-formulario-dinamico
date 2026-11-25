@@ -1,12 +1,37 @@
 @if (formContract) {
-  <h2>{{ formContract.title }}</h2>
+  <form [formGroup]="formGroup" (ngSubmit)="onSubmit()">
+    <h2 data-testid="form-title">{{ formContract.title }}</h2>
 
-  <form>
-    @for (comp of formContract.components; track comp.id) {
-      <div [class]="'col-md-' + comp.details.gridSpan">
-        <label [for]="comp.id">{{ comp.label }}</label>
-        <!-- O campo de input real e as validações do Reactive Forms entrarão aqui na próxima task -->
-      </div>
-    }
+    <div class="form-grid">
+      @for (component of formContract.components; track component.id) {
+        <div [style.grid-column]="'span ' + component.details.gridSpan">
+          <label [for]="component.id">
+            {{ component.label }}
+            @if (component.details.required) {
+              <span
+              class="required-mark"
+              [class.invalid]="isFieldInvalid(component.id)"
+              >*</span>
+            }
+          </label>
+
+          @switch (component.type) {
+            @case (ComponentType.TEXT) {
+              <input type="text" [id]="component.id" [formControlName]="component.id" />
+            }
+            @case (ComponentType.COMBOBOX) {
+              <select [id]="component.id" [formControlName]="component.id">
+                <option value="">Selecione...</option>
+                @for (option of component.details.options; track option) {
+                  <option [value]="option">{{ option }}</option>
+                }
+              </select>
+            }
+          }
+        </div>
+      }
+    </div>
+
+    <button type="submit">Salvar</button>
   </form>
 }
